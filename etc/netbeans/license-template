@@ -1,0 +1,11 @@
+<#if licenseFirst??>
+${licenseFirst}
+</#if>
+${licensePrefix}This file is part of the ${projectName}.
+${licensePrefix}Copyright (C) ${date?date?string("yyyy")} ${company}
+${licensePrefix}This file is licenced under the GNU GPL v3.
+${licensePrefix}For the full copyright and license information, please view the LICENSE
+${licensePrefix}file that was distributed with this source code.
+<#if licenseLast??>
+${licenseLast}
+</#if>

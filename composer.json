@@ -1,0 +1,35 @@
+{
+    "name": "blast-project/dev-kit",
+    "license": "GPL-3.0",
+    "keywords": ["blast", "devkit"],
+    "homepage": "https://github.com/blast-project/CoreBundle",
+    "authors": [
+        {
+            "name": "Libre Informatique",
+            "homepage": "http://www.libre-informatique.fr/"
+        }
+    ],
+    "require": {
+        "php": "^5.5 || ^7.0",
+        "cpliakas/git-wrapper": "^1.7",
+        "doctrine/inflector": "^1.1",
+        "knplabs/github-api": "^1.7",
+        "knplabs/packagist-api": "^1.3",
+        "sebastian/diff": "^1.4",
+        "silex/silex": "^2.0",
+        "sllh/php-cs-fixer-styleci-bridge": "^2.0",
+        "symfony/config": "^3.0",
+        "symfony/console": "^3.0",
+        "symfony/filesystem": "^3.0",
+        "twig/twig": "^1.24",
+        "vlucas/phpdotenv": "^2.2"
+    },
+    "require-dev": {
+        "symfony/var-dumper": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Blast\\DevKit\\": "src"
+        }
+    }
+}
