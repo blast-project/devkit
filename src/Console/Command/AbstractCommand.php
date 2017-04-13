@@ -15,6 +15,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Github\HttpClient\HttpClient;
 use Packagist\Api\Result\Package;
 use Blast\DevKit\GithubClient;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * @author Glenn Cavarlé <glenn.cavarle@libre-informatique.fr>
@@ -22,7 +23,6 @@ use Blast\DevKit\GithubClient;
 class AbstractCommand extends Command
 {
 
-    const GITHUB_GROUP = 'blast-project';
     const GITHUB_USER = 'BlastCI';
     const GITHUB_EMAIL = 'r.et.d@libre-informatique.fr';
     const PACKAGIST_GROUP = 'libre-informatique';
@@ -57,10 +57,14 @@ class AbstractCommand extends Command
      */
     protected $githubPaginator;
     
-    protected $apply = true;
+    protected $apply = false;
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
+        
+        $this->configs = Yaml::parse(file_get_contents(__DIR__.'/../../config/projects.yml'));
+        
+        
         $this->io = new SymfonyStyle($input, $output);
 
         if (getenv('GITHUB_OAUTH_TOKEN')) {
@@ -93,9 +97,9 @@ class AbstractCommand extends Command
         return str_replace('.git', '', end($repositoryArray));
     }
 
-    final protected function getGithubRepoUrl($repositoryName)
+    final protected function getGithubRepoUrl($owner, $repositoryName)
     {
-        return 'https://github.com/' . static::GITHUB_GROUP . '/' . $repositoryName . '.git';
+        return 'https://github.com/' . $owner . '/' . $repositoryName . '.git';
     }
     
     final protected function getGithubDevkitRepoUrl($repositoryName)
@@ -108,9 +112,9 @@ class AbstractCommand extends Command
      * @param type $repositoryName
      * @return type
      */
-    final protected function getClonePath($repositoryName)
+    final protected function getClonePath($owner, $repositoryName)
     {
-        //return sys_get_temp_dir() . '/' . static::GITHUB_GROUP . '/' . $repositoryName;
-        return __DIR__ . '/../../.tmp/' . static::GITHUB_GROUP . '/' . $repositoryName;
+        return sys_get_temp_dir() . '/' . $owner . '/' . $repositoryName;
+        //return __DIR__ . '/../../.tmp/' . $owner . '/' . $repositoryName;
     }
 }

@@ -73,7 +73,7 @@ class DispatchCommand extends AbstractCommand
         $this->gitWrapper = new GitWrapper();
         $this->fileSystem = new Filesystem();
         $this->twig = new \Twig_Environment(
-            new \Twig_Loader_Filesystem(__DIR__ . '/../..'));
+            new \Twig_Loader_Filesystem(__DIR__ . '/../../..'));
 
         $this->projects = ['DoctrinePgsqlBundle'];
     }
@@ -87,16 +87,24 @@ class DispatchCommand extends AbstractCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        foreach ($this->projects as $name) {
-            try {
-                //$package = $this->packagistClient->get(static::PACKAGIST_GROUP . '/' . $name);
-                $this->io->title($name);
+        foreach ($this->configs as $owner => $ownerConfig) {
+            
+            if (!$ownerConfig['options']['active']) {
+                $this->io->note($owner . ' disabled in config.');
+                continue;
+            }
+            foreach ($ownerConfig['repositories'] as $repoName => $repoConfig) {
 
-                $git = $this->cloneRepository($name);
-                $this->applyChanges($name);
-                $this->pushChanges($git, $name);
-            } catch (ExceptionInterface $e) {
-                $this->io->error('Failed with message: ' . $e->getMessage());
+                $repoConfig = array_merge(
+                    ['active' => false, 'is_project' => false]
+                    , $repoConfig);
+
+                if (!$repoConfig['active']) {
+                    $this->io->note($owner . '/'.$repoName.' disabled in config.');
+                    continue;
+                }
+
+                $this->executeForRepo($owner, $repoName, $repoConfig);
             }
         }
 
@@ -105,20 +113,44 @@ class DispatchCommand extends AbstractCommand
 
     /**
      * 
+     * @param type $owner
+     * @param type $repoName
+     */
+    protected function executeForRepo($owner, $repoName, array $repoConfig)
+    {
+
+        try {
+            $this->io->title($owner . '/' . $repoName);
+
+            $git = $this->cloneRepository($owner, $repoName);
+            $this->applyChanges($owner, $repoName);
+
+            if ($repoConfig['is_project']) {
+                $this->moveDocToApp($owner, $repoName);
+            }
+
+            $this->pushChanges($git, $owner, $repoName);
+        } catch (ExceptionInterface $e) {
+            $this->io->error('Failed with message: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 
      * @param type $repositoryName
      */
-    protected function cloneRepository($repositoryName)
+    protected function cloneRepository($owner, $repositoryName)
     {
 
         // Ensure temp dir
-        $clonePath = $this->getClonePath($repositoryName);
+        $clonePath = $this->getClonePath($owner, $repositoryName);
         if ($this->fileSystem->exists($clonePath)) {
             $this->fileSystem->remove($clonePath);
         }
         // Clone repository
         $git = $this->gitWrapper->cloneRepository(
             'https://' . static::GITHUB_USER . ':' . $this->githubAuthKey
-            . '@github.com/' . static::GITHUB_GROUP . '/' . $repositoryName, $clonePath
+            . '@github.com/' . $owner . '/' . $repositoryName, $clonePath
         );
         //Git config
         $git
@@ -135,7 +167,7 @@ class DispatchCommand extends AbstractCommand
      * 
      * @param type $repositoryName
      */
-    protected function pushChanges($git, $repositoryName)
+    protected function pushChanges($git, $owner, $repositoryName)
     {
         $git->add('.', array('all' => true))->getOutput();
         $diff = $git->diff('--color', '--cached')->getOutput();
@@ -143,14 +175,14 @@ class DispatchCommand extends AbstractCommand
         if (!empty($diff)) {
             $this->io->comment('Diff is not empty.');
             $this->io->comment('Start creating a pull request from fork...');
-            $this->io->comment('[apply flag] is ' . $this->apply);
+            $this->io->comment('[apply flag] is ' . ($this->apply ? 'true' : 'false'));
             if ($this->apply) {
 
                 $this->io->comment('Creating new commit...');
                 $git->commit('DevKit updates');
 
                 $this->io->comment('Creating new fork...');
-                $this->githubClient->repos()->forks()->create(static::GITHUB_GROUP, $repositoryName);
+                $this->githubClient->repos()->forks()->create($owner, $repositoryName);
 
                 $this->io->comment('Adding remote based on ' . static::GITHUB_USER . ' fork...');
                 $git->addRemote(static::GITHUB_USER, $this->getGithubDevkitRepoUrl($repositoryName));
@@ -161,16 +193,16 @@ class DispatchCommand extends AbstractCommand
 
                 // If the Pull Request does not exists yet, create it.
                 $pulls = $this->githubClient->pullRequests()
-                    ->all(static::GITHUB_GROUP, $repositoryName, array(
+                    ->all($owner, $repositoryName, array(
                     'state' => 'open',
                     'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH
                 ));
 
                 if (0 === count($pulls)) {
                     $this->io->comment('Pull request does not exist.');
-                    $this->io->comment('Creating pull-request for ' . $repositoryName);
+                    $this->io->comment('Creating pull-request for ' . $owner . '/' . $repositoryName);
                     $this->githubClient->pullRequests()
-                        ->create(static::GITHUB_GROUP, $repositoryName, array(
+                        ->create($owner, $repositoryName, array(
                             'title' => 'DevKit updates for ' . $repositoryName,
                             'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH,
                             'base' => 'master',
@@ -193,23 +225,23 @@ class DispatchCommand extends AbstractCommand
      * @param type $git
      * @param type $repositoryName
      */
-    protected function deleteFork($git, $repositoryName)
+    protected function deleteFork($git, $owner, $repositoryName)
     {
-        $this->io->comment('Deleting remote ' . $repositoryName . ' fork...');
+        $this->io->comment('Deleting remote ' . static::GITHUB_USER . '/' . $repositoryName . ' fork...');
         $this->githubClient->repositories()->remove(static::GITHUB_USER, $repositoryName);
-        $this->io->success('Fork for ' . $repositoryName . ' deleted.');
+        $this->io->success('Fork ' . static::GITHUB_USER . '/' . $repositoryName . ' deleted.');
     }
 
     /**
      * 
      * @param type $repositoryName
      */
-    protected function applyChanges($repositoryName)
+    protected function applyChanges($owner, $repositoryName)
     {
-        $clonePath = $this->getClonePath($repositoryName);
+        $clonePath = $this->getClonePath($owner, $repositoryName);
         $this->fileSystem->mirror('etc/bundle-skeleton', $clonePath, null, ['override' => true]);
         $result = $this->twig->render('etc/bundle-skeleton/.travis.yml', [
-            'github_url' => $this->getGithubRepoUrl($repositoryName)
+            'github_url' => $this->getGithubRepoUrl($owner, $repositoryName)
         ]);
 
         file_put_contents($clonePath . '/.travis.yml', $result);
@@ -219,9 +251,9 @@ class DispatchCommand extends AbstractCommand
      * 
      * @param type $repositoryName
      */
-    protected function configureProjectDocSkeleton($repositoryName)
+    protected function moveDocToApp($owner, $repositoryName)
     {
-        $clonePath = $this->getClonePath($repositoryName);
+        $clonePath = $this->getClonePath($owner, $repositoryName);
         $this->fileSystem->mirror($clonePath . '/Resources', $clonePath . '/app/Resources', null, ['override' => true]);
         $this->fileSystem->remove($clonePath . '/Resources');
     }

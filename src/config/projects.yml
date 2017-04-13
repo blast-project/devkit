@@ -1,0 +1,33 @@
+blast-project:
+    options:
+       active: true
+
+    repositories:
+        CoreBundle:
+            active: true
+
+        DoctrinePgsqlBundle:
+            active: true
+
+        DoctrineSessionBundle:
+            active: true
+
+        OuterExtensionBundle:
+            active: true
+
+        BaseEntitiesBundle:
+            active: true
+
+        UtilsBundle:
+            active: true
+
+        Blast:
+            active: false
+            is_project: true
+
+libre-informatique:
+    options:
+       active: false
+
+    repositories:
+      
