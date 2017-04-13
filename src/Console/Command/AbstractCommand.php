@@ -57,7 +57,7 @@ class AbstractCommand extends Command
      */
     protected $githubPaginator;
     
-    protected $apply = false;
+    protected $apply = true;
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
@@ -102,9 +102,12 @@ class AbstractCommand extends Command
         return 'https://github.com/' . $owner . '/' . $repositoryName . '.git';
     }
     
-    final protected function getGithubDevkitRepoUrl($repositoryName)
+    final protected function getGithubDevkitRepoUrl($owner, $repositoryName)
     {
-        return 'git@github.com:' . static::GITHUB_USER . '/' . $repositoryName . '.git';
+        return 'https://' . static::GITHUB_USER . ':' . $this->githubAuthKey
+            . '@github.com/' . static::GITHUB_USER . '/' . $repositoryName;
+        
+        //'git@github.com:' . static::GITHUB_USER . '/' . $repositoryName . '.git';
     }
 
     /**

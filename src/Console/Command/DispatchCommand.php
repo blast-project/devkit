@@ -88,7 +88,7 @@ class DispatchCommand extends AbstractCommand
     {
 
         foreach ($this->configs as $owner => $ownerConfig) {
-            
+
             if (!$ownerConfig['options']['active']) {
                 $this->io->note($owner . ' disabled in config.');
                 continue;
@@ -100,7 +100,7 @@ class DispatchCommand extends AbstractCommand
                     , $repoConfig);
 
                 if (!$repoConfig['active']) {
-                    $this->io->note($owner . '/'.$repoName.' disabled in config.');
+                    $this->io->note($owner . '/' . $repoName . ' disabled in config.');
                     continue;
                 }
 
@@ -185,7 +185,7 @@ class DispatchCommand extends AbstractCommand
                 $this->githubClient->repos()->forks()->create($owner, $repositoryName);
 
                 $this->io->comment('Adding remote based on ' . static::GITHUB_USER . ' fork...');
-                $git->addRemote(static::GITHUB_USER, $this->getGithubDevkitRepoUrl($repositoryName));
+                $git->addRemote(static::GITHUB_USER, $this->getGithubDevkitRepoUrl($owner, $repositoryName));
                 usleep(500000);
 
                 $this->io->comment('Pushing...');
@@ -213,7 +213,7 @@ class DispatchCommand extends AbstractCommand
                 // Wait 200ms to be sure GitHub API is up to date with new pushed branch/PR.
                 usleep(200000);
                 $this->io->success('Pull request for ' . $repositoryName . ' created.');
-                $this->deleteFork($git, $repositoryName);
+                $this->deleteFork($git, $owner, $repositoryName);
             }
         } else {
             $this->io->comment(static::LABEL_NOTHING_CHANGED);

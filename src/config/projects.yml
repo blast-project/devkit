@@ -7,19 +7,19 @@ blast-project:
             active: true
 
         DoctrinePgsqlBundle:
-            active: true
+            active: false
 
         DoctrineSessionBundle:
-            active: true
+            active: false
 
         OuterExtensionBundle:
-            active: true
+            active: false
 
         BaseEntitiesBundle:
-            active: true
+            active: false
 
         UtilsBundle:
-            active: true
+            active: false
 
         Blast:
             active: false
