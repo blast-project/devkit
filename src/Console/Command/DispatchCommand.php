@@ -6,7 +6,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Blast\DevKit\Console;
+namespace Blast\DevKit\Console\Command;
 
 use Doctrine\Common\Inflector\Inflector;
 use Github\Exception\ExceptionInterface;

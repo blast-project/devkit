@@ -8,7 +8,7 @@
  */
 namespace Blast\DevKit\Console;
 
-use Blast\DevKit\Console\Command\AutoMergeCommand;
+use Blast\DevKit\Console\Command\DispatchCommand;
 use Symfony\Component\Console\Application as BaseApplication;
 
 /**
