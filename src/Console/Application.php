@@ -9,6 +9,7 @@
 namespace Blast\DevKit\Console;
 
 use Blast\DevKit\Console\Command\DispatchCommand;
+use Blast\DevKit\Console\Command\AutoMergeCommand;
 use Symfony\Component\Console\Application as BaseApplication;
 
 /**
@@ -25,5 +26,6 @@ class Application extends BaseApplication
         parent::__construct();
 
         $this->add(new DispatchCommand());
+        $this->add(new AutoMergeCommand());
     }
 }

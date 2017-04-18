@@ -24,8 +24,7 @@ use Symfony\Component\Filesystem\Filesystem;
 class DispatchCommand extends AbstractCommand
 {
 
-    const LABEL_NOTHING_CHANGED = 'Nothing to be changed.';
-    const DEVKIT_BRANCH = 'update-branch';
+    
 
     /**
      * @var GitWrapper
@@ -56,9 +55,8 @@ class DispatchCommand extends AbstractCommand
 
         $this
             ->setName('dispatch')
-            ->setDescription('Dispatches configuration and documentation files for all blast projects.')
-            ->addArgument('projects', InputArgument::IS_ARRAY, 'To limit the dispatcher on given project(s).', array())
-            ->addOption('with-files', null, InputOption::VALUE_NONE, 'Applies Pull Request actions for projects files');
+            ->setDescription('Dispatches configuration and documentation files for all blast bunldes.')
+            ->addArgument('bundles', InputArgument::IS_ARRAY, 'To limit the dispatcher on given bundle(s).', array());
     }
 
     /**
@@ -75,7 +73,7 @@ class DispatchCommand extends AbstractCommand
         $this->twig = new \Twig_Environment(
             new \Twig_Loader_Filesystem(__DIR__ . '/../../..'));
 
-        $this->projects = ['DoctrinePgsqlBundle'];
+        $this->configs = $this->computeBundleConfigs($input->getArgument('bundles'));
     }
 
     /**
@@ -175,7 +173,6 @@ class DispatchCommand extends AbstractCommand
         if (!empty($diff)) {
             $this->io->comment('Diff is not empty.');
             $this->io->comment('Start creating a pull request from fork...');
-            $this->io->comment('[apply flag] is ' . ($this->apply ? 'true' : 'false'));
             if ($this->apply) {
 
                 $this->io->comment('Creating new commit...');
