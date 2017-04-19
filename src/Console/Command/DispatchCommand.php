@@ -251,7 +251,7 @@ class DispatchCommand extends AbstractCommand
     protected function moveDocToApp($owner, $repositoryName)
     {
         $clonePath = $this->getClonePath($owner, $repositoryName);
-        $this->fileSystem->mirror($clonePath . '/Resources', $clonePath . '/app/Resources', null, ['override' => true]);
-        $this->fileSystem->remove($clonePath . '/Resources');
+        $this->fileSystem->mirror($clonePath . '/src/Resources', $clonePath . '/app/Resources', null, ['override' => true]);
+        $this->fileSystem->remove($clonePath . '/src/Resources');
     }
 }
