@@ -103,23 +103,148 @@ class AbstractCommand extends Command
     }
 
     /**
-     * Returns repository name without vendor prefix.
-     *
-     * @param Package $package
-     *
-     * @return string
+     * 
      */
-    final protected function getRepositoryName(Package $package)
+    final protected function forEachRepoDo($callback)
     {
-        $repositoryArray = explode('/', $package->getRepository());
-        return str_replace('.git', '', end($repositoryArray));
+        foreach ($this->configs as $owner => $ownerConfig) {
+
+            if (!$ownerConfig['options']['active']) {
+                $this->io->note($owner . ' disabled in config.');
+                continue;
+            }
+            foreach ($ownerConfig['repositories'] as $repoName => $repoConfig) {
+
+                $repoConfig = array_merge(
+                    ['active' => false, 'is_project' => false]
+                    , $repoConfig);
+
+                if (!$repoConfig['active']) {
+                    $this->io->note($owner . '/' . $repoName . ' disabled in config.');
+                    continue;
+                }
+
+                $callback($owner, $repoName, $repoConfig);
+            }
+        }
     }
 
+    /**
+     * 
+     * @param type $owner
+     * @param type $repositoryName
+     * @return \GitWrapper\GitWorkingCopy
+     */
+    final protected function cloneRepository($owner, $repositoryName)
+    {
+
+        // Ensure temp dir
+        $clonePath = $this->getLocalClonePath($owner, $repositoryName);
+        if ($this->fileSystem->exists($clonePath)) {
+            $this->fileSystem->remove($clonePath);
+        }
+        // Clone repository
+        $git = $this->gitWrapper->cloneRepository(
+            'https://' . static::GITHUB_USER . ':' . $this->githubAuthKey
+            . '@github.com/' . $owner . '/' . $repositoryName, $clonePath
+        );
+        //Git config
+        $git
+            ->config('user.name', static::GITHUB_USER)
+            ->config('user.email', static::GITHUB_EMAIL);
+
+        $git->reset(array('hard' => true));
+        $git->checkout('-b', static::DEVKIT_BRANCH);
+
+        return $git;
+    }
+
+    /**
+     * 
+     * @param type $repositoryName
+     */
+    final protected function pushChanges($git, $owner, $repositoryName)
+    {
+        $git->add('.', array('all' => true))->getOutput();
+        $diff = $git->diff('--color', '--cached')->getOutput();
+
+        if (!empty($diff)) {
+            $this->io->logStep('Diff is not empty.');
+
+            if ($this->apply) {
+                $this->logStep('Start creating a pull request from fork...');
+
+                $this->logStep('Creating new commit...');
+                $git->commit('DevKit updates');
+
+                $this->logStep('Creating new fork...');
+                $this->githubClient->repos()->forks()->create($owner, $repositoryName);
+
+                $this->logStep('Adding remote based on ' . static::GITHUB_USER . ' fork...');
+                $git->addRemote(static::GITHUB_USER, $this->getGithubDevkitRepoUrl($owner, $repositoryName));
+                usleep(500000);
+
+                $this->logStep('Pushing...');
+                $git->push('-u', static::GITHUB_USER, static::DEVKIT_BRANCH);
+
+                // If the Pull Request does not exists yet, create it.
+                $pulls = $this->githubClient->pullRequests()
+                    ->all($owner, $repositoryName, array(
+                    'state' => 'open',
+                    'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH
+                ));
+
+                if (0 === count($pulls)) {
+                    $this->logStep('Pull request does not exist.');
+                    $this->logStep('Creating pull-request for ' . $owner . '/' . $repositoryName);
+                    $this->githubClient->pullRequests()
+                        ->create($owner, $repositoryName, array(
+                            'title' => 'DevKit updates for ' . $repositoryName,
+                            'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH,
+                            'base' => 'master',
+                            'body' => ''
+                    ));
+                }
+
+                // Wait 200ms to be sure GitHub API is up to date with new pushed branch/PR.
+                usleep(200000);
+                $this->io->success('Pull request for ' . $repositoryName . ' created.');
+                $this->deleteFork($git, $owner, $repositoryName);
+            }
+        } else {
+            $this->io->comment(static::LABEL_NOTHING_CHANGED);
+        }
+    }
+
+    /**
+     * 
+     * @param type $git
+     * @param type $repositoryName
+     */
+    final protected function deleteFork($git, $owner, $repositoryName)
+    {
+        $this->io->comment('Deleting remote ' . static::GITHUB_USER . '/' . $repositoryName . ' fork...');
+        $this->githubClient->repositories()->remove(static::GITHUB_USER, $repositoryName);
+        $this->io->success('Fork ' . static::GITHUB_USER . '/' . $repositoryName . ' deleted.');
+    }
+
+    /**
+     * 
+     * @param type $owner
+     * @param type $repositoryName
+     * @return type
+     */
     final protected function getGithubRepoUrl($owner, $repositoryName)
     {
         return 'https://github.com/' . $owner . '/' . $repositoryName . '.git';
     }
 
+    /**
+     * 
+     * @param type $owner
+     * @param type $repositoryName
+     * @return type
+     */
     final protected function getGithubDevkitRepoUrl($owner, $repositoryName)
     {
         return 'https://' . static::GITHUB_USER . ':' . $this->githubAuthKey
@@ -136,7 +261,16 @@ class AbstractCommand extends Command
     final protected function getClonePath($owner, $repositoryName)
     {
         return sys_get_temp_dir() . '/' . $owner . '/' . $repositoryName;
-        //return __DIR__ . '/../../.tmp/' . $owner . '/' . $repositoryName;
+    }
+
+    /**
+     * 
+     * @param type $repositoryName
+     * @return type
+     */
+    final protected function getLocalClonePath($owner, $repositoryName)
+    {
+        return __DIR__ . '/../../../.tmp/' . $owner . '/' . $repositoryName;
     }
 
     /**
@@ -144,7 +278,7 @@ class AbstractCommand extends Command
      * @param array $userBunldeCfg
      * @return boolean
      */
-    public function computeBundleConfigs(array $userBunldeCfg)
+    final public function computeBundleConfigs(array $userBunldeCfg)
     {
 
         if (empty($userBunldeCfg)) {
@@ -170,5 +304,14 @@ class AbstractCommand extends Command
         }
 
         return $newConfigs;
+    }
+    
+    
+    public function logStep($message)
+    {
+       $messages = is_array($message) ? array_values($message) : array($message);
+
+        $this->io->writeln($messages);
+        $this->io->newLine();
     }
 }

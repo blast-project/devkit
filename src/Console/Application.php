@@ -9,7 +9,9 @@
 namespace Blast\DevKit\Console;
 
 use Blast\DevKit\Console\Command\DispatchCommand;
-use Blast\DevKit\Console\Command\AutoMergeCommand;
+use Blast\DevKit\Console\Command\PrAutoMergeCommand;
+use Blast\DevKit\Console\Command\PrAutoCloseCommand;
+use Blast\DevKit\Console\Command\SrcMigrationCommand;
 use Symfony\Component\Console\Application as BaseApplication;
 
 /**
@@ -26,6 +28,8 @@ class Application extends BaseApplication
         parent::__construct();
 
         $this->add(new DispatchCommand());
-        $this->add(new AutoMergeCommand());
+        $this->add(new PrAutoMergeCommand());
+        $this->add(new SrcMigrationCommand());
+        $this->add(new PrAutoCloseCommand());
     }
 }

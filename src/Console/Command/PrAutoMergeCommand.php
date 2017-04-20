@@ -18,7 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  *
  * @author Glenn Cavarlé <glenn.cavarle@libre-informatique.fr>
  */
-class AutoMergeCommand extends AbstractCommand
+class PrAutoMergeCommand extends AbstractCommand
 {
 
     /**
@@ -42,7 +42,6 @@ class AutoMergeCommand extends AbstractCommand
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         parent::initialize($input, $output);
-
         $this->configs = $this->computeBundleConfigs($input->getArgument('bundles'));
     }
 
@@ -54,25 +53,9 @@ class AutoMergeCommand extends AbstractCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        foreach ($this->configs as $owner => $ownerConfig) {
-
-            if (!$ownerConfig['options']['active']) {
-                $this->io->note($owner . ' disabled in config.');
-                continue;
-            }
-            foreach ($ownerConfig['repositories'] as $repoName => $repoConfig) {
-
-                $repoConfig = array_merge(
-                    ['active' => false, 'is_project' => false]
-                    , $repoConfig);
-
-                if (!$repoConfig['active']) {
-                    $this->io->note($owner . '/' . $repoName . ' disabled in config.');
-                    continue;
-                }
-                $this->executeMergeBranches($owner, $repoName, $repoConfig);
-            }
-        }
+        $this->forEachRepoDo(function($owner, $repoName, $repoConfig) {
+            $this->autoMergeBranches($owner, $repoName, $repoConfig);
+        });
 
         return 0;
     }
@@ -84,7 +67,7 @@ class AutoMergeCommand extends AbstractCommand
      * @return type
      * @throws RuntimeException
      */
-    private function executeMergeBranches($owner, $repoName, array $repoConfig)
+    private function autoMergeBranches($owner, $repoName, array $repoConfig)
     {
         $this->io->title($owner . '/' . $repoName);
 
@@ -94,7 +77,7 @@ class AutoMergeCommand extends AbstractCommand
         $id = null;
 
         //find the pull request
-        $this->io->comment('Finding pull request...');
+        $this->logStep('- Finding pull request...');
         $pulls = $this->githubClient->pullRequests()
             ->all($owner, $repoName, array(
             'state' => 'open',
@@ -106,11 +89,12 @@ class AutoMergeCommand extends AbstractCommand
                 strpos($pull['title'], 'DevKit updates') !== false) {
                 $id = $pull['number'];
                 $sha = $pull['head']['sha'];
-                $this->io->comment(sprintf('Found pull request id[%s] title[%s] sha[%s]', $id, $pull['title'], $sha));
+                $this->logStep(sprintf('- Found pull request id[%s] title[%s] sha[%s]', $id, $pull['title'], $sha));
                 $this->mergePullRequest($owner, $repoName, $id, $head, $base, $sha);
                 return;
             }
         }
+        $this->logStep('[x] Pull request does not exist.');
     }
 
     /**
@@ -132,7 +116,7 @@ class AutoMergeCommand extends AbstractCommand
             if (is_array($response) && array_key_exists('sha', $response)) {
                 $this->io->success('Merged ' . $head . ' into ' . $base);
             } else {
-                $this->io->comment('Nothing to merge on ' . $base);
+                $this->logStep('- Nothing to merge on ' . $base);
             }
         } catch (\RuntimeException $e) {
             if (409 === $e->getCode()) {

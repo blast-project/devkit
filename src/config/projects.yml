@@ -7,19 +7,19 @@ blast-project:
             active: true
 
         DoctrinePgsqlBundle:
-            active: false
+            active: true
 
         DoctrineSessionBundle:
-            active: false
+            active: true
 
         OuterExtensionBundle:
-            active: false
+            active: true
 
         BaseEntitiesBundle:
-            active: false
+            active: true
 
         UtilsBundle:
-            active: false
+            active: true
 
         Blast:
             active: false
@@ -27,7 +27,41 @@ blast-project:
 
 libre-informatique:
     options:
-       active: false
+       active: true
 
     repositories:
-      
+        EcommerceBundle:
+            active: true
+            
+        VarietiesBundle:
+            active: true
+            
+        EmailBundle:
+            active: true
+            
+        SeedBatchBundle:
+            active: true
+            
+        CRMBundle:
+            active: true
+            
+        SonataSyliusUserBundle:
+            active: true
+            
+        EmailCRMBundle:
+            active: true
+            
+        UIBundle:
+            active: true
+            
+        SecurityBundle:
+            active: true
+            
+        MediaBundle:
+            active: true
+            
+        DecoratorBundle:
+            active: true
+            
+        UserBundle:
+            active: true

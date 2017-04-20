@@ -8,10 +8,8 @@
  */
 namespace Blast\DevKit\Console\Command;
 
-use Doctrine\Common\Inflector\Inflector;
 use Github\Exception\ExceptionInterface;
 use GitWrapper\GitWrapper;
-use Packagist\Api\Result\Package;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -21,7 +19,7 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * @author Glenn Cavarlé <glenn.cavarle@libre-informatique.fr>
  */
-class DispatchCommand extends AbstractCommand
+class SrcMigrationCommand extends AbstractCommand
 {
 
     /**
@@ -40,11 +38,6 @@ class DispatchCommand extends AbstractCommand
     private $twig;
 
     /**
-     * @var string[]
-     */
-    private $projects;
-
-    /**
      * 
      */
     protected function configure()
@@ -52,8 +45,8 @@ class DispatchCommand extends AbstractCommand
         parent::configure();
 
         $this
-            ->setName('dispatch')
-            ->setDescription('Dispatches configuration and documentation files for all blast bunldes.')
+            ->setName('src-migrate')
+            ->setDescription('Migrates sources within /src folder')
             ->addArgument('bundles', InputArgument::IS_ARRAY, 'To limit the dispatcher on given bundle(s).', array());
     }
 
@@ -82,9 +75,8 @@ class DispatchCommand extends AbstractCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
         $this->forEachRepoDo(function($owner, $repoName, $repoConfig) {
-            $this->dispatchChanges($owner, $repoName, $repoConfig);
+            $this->migrateSources($owner, $repoName, $repoConfig);
         });
 
         return 0;
@@ -95,7 +87,7 @@ class DispatchCommand extends AbstractCommand
      * @param type $owner
      * @param type $repoName
      */
-    protected function dispatchChanges($owner, $repoName, array $repoConfig)
+    protected function migrateSources($owner, $repoName, array $repoConfig)
     {
 
         try {
@@ -105,7 +97,7 @@ class DispatchCommand extends AbstractCommand
             $this->applyChanges($owner, $repoName);
 
             if ($repoConfig['is_project']) {
-                $this->moveDocToApp($owner, $repoName);
+                // $this->moveDocToApp($owner, $repoName);
             }
 
             $this->pushChanges($git, $owner, $repoName);
@@ -120,23 +112,55 @@ class DispatchCommand extends AbstractCommand
      */
     protected function applyChanges($owner, $repositoryName)
     {
-        $clonePath = $this->getClonePath($owner, $repositoryName);
+        $clonePath = $this->getLocalClonePath($owner, $repositoryName);
+        $oldEtcFolder = $clonePath . '/etc';
+        $newSrcFolder = $clonePath . '/src';
+        $newTestFolder = $clonePath . '/tests';
+
+        if ($this->fileSystem->exists($oldEtcFolder)) {
+            $this->fileSystem->remove($oldEtcFolder);
+        }
+
+        if (!$this->fileSystem->exists($newSrcFolder)) {
+            $this->fileSystem->mkdir($clonePath . '/src');
+        }
+
+        if (!$this->fileSystem->exists($newTestFolder)) {
+            $this->fileSystem->mkdir($newTestFolder);
+            $this->fileSystem->touch($newTestFolder . '/.gitkeep');
+        }
+
+
+        //retrieve all files/folders to be moved
+        $nodes = glob($clonePath . "/[A-Z][a-z]*", GLOB_ONLYDIR);
+        $nodes = array_merge($nodes, glob($clonePath . "/[A-Z][a-z]*.php"));
+
+        //actually move sources in /src
+        foreach ($nodes as $nodeName) {
+            //split path, add 'src' before package name and rename
+            $pathParts = explode('/', $nodeName);
+            $packageNameIndex = count($pathParts) - 1;
+
+            $packageName = $pathParts[$packageNameIndex];
+            $pathParts[$packageNameIndex] = 'src';
+            $pathParts[] = $packageName;
+            $this->io->comment("move $packageName in /src");
+            $this->fileSystem->rename($nodeName, implode('/', $pathParts));
+        }
+
+        //complete travis.yml
         $this->fileSystem->mirror('etc/bundle-skeleton', $clonePath, null, ['override' => true]);
         $result = $this->twig->render('etc/bundle-skeleton/.travis.yml', [
             'github_url' => $this->getGithubRepoUrl($owner, $repositoryName)
         ]);
-
         file_put_contents($clonePath . '/.travis.yml', $result);
-    }
 
-    /**
-     * 
-     * @param type $repositoryName
-     */
-    protected function moveDocToApp($owner, $repositoryName)
-    {
-        $clonePath = $this->getClonePath($owner, $repositoryName);
-        $this->fileSystem->mirror($clonePath . '/src/Resources', $clonePath . '/app/Resources', null, ['override' => true]);
-        $this->fileSystem->remove($clonePath . '/src/Resources');
+        //override composer
+        $composerFile = json_decode(file_get_contents($clonePath . '/composer.json'), true);
+        $psr4 = $composerFile['autoload']['psr-4'];
+        $psr4Keys = array_keys($psr4);
+        $composerFile['autoload']['psr-4'][$psr4Keys[0]] = 'src/';
+        $composerFile['autoload']['psr-4'][$psr4Keys[0] . 'Tests\\'] = 'tests/';
+        file_put_contents($clonePath . '/composer.json', json_encode($composerFile, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 }
