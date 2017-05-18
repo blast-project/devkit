@@ -21,9 +21,8 @@ blast-project:
         UtilsBundle:
             active: true
 
-        Blast:
-            active: false
-            is_project: true
+        bundle-skeleton:
+            active: true
 
 libre-informatique:
     options:
