@@ -22,7 +22,7 @@ class PrAutoCloseCommand extends AbstractCommand
 {
 
     /**
-     * 
+     *
      */
     protected function configure()
     {
@@ -35,7 +35,7 @@ class PrAutoCloseCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      */
@@ -46,15 +46,14 @@ class PrAutoCloseCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
-        $this->forEachRepoDo(function($owner, $repoName, $repoConfig) {
+        $this->forEachRepoDo(function ($owner, $repoName, $repoConfig) {
             $this->closePullRequest($owner, $repoName, $repoConfig);
         });
 
@@ -62,7 +61,7 @@ class PrAutoCloseCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param Package $package
      * @param array $projectConfig
      * @return type
@@ -84,11 +83,9 @@ class PrAutoCloseCommand extends AbstractCommand
         }
         $pull = $pulls[0];
 
-        $this->logStep(sprintf('- Found pull request id[%s] title[%s] sha[%s]'
-                , $pull['number'], $pull['title'], $pull['sha']));
+        $this->logStep(sprintf('- Found pull request id[%s] title[%s] sha[%s]', $pull['number'], $pull['title'], $pull['sha']));
 
-        $this->logStep(sprintf('- Updating pull-request for %s/%s ...'
-                , $owner, $repoName));
+        $this->logStep(sprintf('- Updating pull-request for %s/%s ...', $owner, $repoName));
 
         if (!$this->apply) {
             return;

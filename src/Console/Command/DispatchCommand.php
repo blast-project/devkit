@@ -71,7 +71,6 @@ class DispatchCommand extends AbstractCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
         $this->forEachRepoDo(function ($owner, $repoName, $repoConfig) {
             $this->dispatchChanges($owner, $repoName, $repoConfig);
         });
@@ -86,7 +85,6 @@ class DispatchCommand extends AbstractCommand
      */
     protected function dispatchChanges($owner, $repoName, array $repoConfig)
     {
-
         try {
             $this->io->title($owner . '/' . $repoName);
 
