@@ -25,7 +25,6 @@ use Symfony\Component\Yaml\Yaml;
  */
 class AbstractCommand extends Command
 {
-
     const GITHUB_USER = 'BlastCI';
     const GITHUB_EMAIL = 'r.et.d@libre-informatique.fr';
     const LI_GROUP = 'libre-informatique';
@@ -78,7 +77,6 @@ class AbstractCommand extends Command
     
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-
         $this->configs = Yaml::parse(file_get_contents(__DIR__ . '/../../config/projects.yml'));
 
 
@@ -299,7 +297,6 @@ class AbstractCommand extends Command
      */
     final public function computeBundleConfigs(array $userBunldeCfg)
     {
-
         if (empty($userBunldeCfg)) {
             return $this->configs;
         }

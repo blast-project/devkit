@@ -22,7 +22,7 @@ class PrAutoMergeCommand extends AbstractCommand
 {
 
     /**
-     * 
+     *
      */
     protected function configure()
     {
@@ -35,7 +35,7 @@ class PrAutoMergeCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      */
@@ -46,14 +46,14 @@ class PrAutoMergeCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->forEachRepoDo(function($owner, $repoName, $repoConfig) {
+        $this->forEachRepoDo(function ($owner, $repoName, $repoConfig) {
             $this->autoMergeBranches($owner, $repoName, $repoConfig);
         });
 
@@ -61,7 +61,7 @@ class PrAutoMergeCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param Package $package
      * @param array $projectConfig
      * @return type
@@ -85,7 +85,7 @@ class PrAutoMergeCommand extends AbstractCommand
         ));
 
         foreach ($pulls as $pull) {
-            if ($pull['head']['label'] == $head &&
+            if ($pull['head']['label'] === $head &&
                 strpos($pull['title'], 'DevKit updates') !== false) {
                 $id = $pull['number'];
                 $sha = $pull['head']['sha'];
@@ -98,7 +98,7 @@ class PrAutoMergeCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @throws \Blast\DevKit\Console\Command\RuntimeException
      */
     private function mergePullRequest($owner, $repoName, $id, $head, $base, $sha)

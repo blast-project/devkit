@@ -78,7 +78,6 @@ class SrcMigrationCommand extends AbstractCommand
      */
     protected function migrateSources($owner, $repoName, array $repoConfig)
     {
-
         try {
             $this->io->title($owner . '/' . $repoName);
 
