@@ -25,16 +25,6 @@ class DispatchCommand extends AbstractCommand
 {
 
     /**
-     * @var GitWrapper
-     */
-    private $gitWrapper;
-
-    /**
-     * @var Filesystem
-     */
-    private $fileSystem;
-
-    /**
      * @var \Twig_Environment
      */
     private $twig;
@@ -45,7 +35,7 @@ class DispatchCommand extends AbstractCommand
     private $projects;
 
     /**
-     * 
+     *
      */
     protected function configure()
     {
@@ -54,11 +44,11 @@ class DispatchCommand extends AbstractCommand
         $this
             ->setName('dispatch')
             ->setDescription('Dispatches configuration and documentation files for all blast bunldes.')
-            ->addArgument('bundles', InputArgument::IS_ARRAY, 'To limit the dispatcher on given bundle(s).', array());
+            ->addArgument('bundles', InputArgument::IS_ARRAY, 'To limit the dispatcher on given bundle(s). Ex: blast-project::DoctrineSessionBundle', array());
     }
 
     /**
-     * 
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      */
@@ -66,16 +56,15 @@ class DispatchCommand extends AbstractCommand
     {
         parent::initialize($input, $output);
 
-        $this->gitWrapper = new GitWrapper();
-        $this->fileSystem = new Filesystem();
         $this->twig = new \Twig_Environment(
-            new \Twig_Loader_Filesystem(__DIR__ . '/../../..'));
+            new \Twig_Loader_Filesystem(__DIR__ . '/../../..')
+        );
 
         $this->configs = $this->computeBundleConfigs($input->getArgument('bundles'));
     }
 
     /**
-     * 
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return int
@@ -83,7 +72,7 @@ class DispatchCommand extends AbstractCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        $this->forEachRepoDo(function($owner, $repoName, $repoConfig) {
+        $this->forEachRepoDo(function ($owner, $repoName, $repoConfig) {
             $this->dispatchChanges($owner, $repoName, $repoConfig);
         });
 
@@ -91,7 +80,7 @@ class DispatchCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param type $owner
      * @param type $repoName
      */
@@ -115,12 +104,12 @@ class DispatchCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param type $repositoryName
      */
     protected function applyChanges($owner, $repositoryName)
     {
-        $clonePath = $this->getClonePath($owner, $repositoryName);
+        $clonePath = $this->getLocalClonePath($owner, $repositoryName);
         $this->fileSystem->mirror('etc/bundle-skeleton', $clonePath, null, ['override' => true]);
         $result = $this->twig->render('etc/bundle-skeleton/.travis.yml', [
             'github_url' => $this->getGithubRepoUrl($owner, $repositoryName)
@@ -130,12 +119,12 @@ class DispatchCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param type $repositoryName
      */
     protected function moveDocToApp($owner, $repositoryName)
     {
-        $clonePath = $this->getClonePath($owner, $repositoryName);
+        $clonePath = $this->getLocalClonePath($owner, $repositoryName);
         $this->fileSystem->mirror($clonePath . '/src/Resources', $clonePath . '/app/Resources', null, ['override' => true]);
         $this->fileSystem->remove($clonePath . '/src/Resources');
     }

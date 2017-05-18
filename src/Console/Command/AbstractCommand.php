@@ -13,7 +13,9 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Filesystem\Filesystem;
 use Github\HttpClient\HttpClient;
+use GitWrapper\GitWrapper;
 use Packagist\Api\Result\Package;
 use Blast\DevKit\GithubClient;
 use Symfony\Component\Yaml\Yaml;
@@ -62,6 +64,18 @@ class AbstractCommand extends Command
     protected $githubPaginator;
     protected $apply = false;
 
+    /**
+     * @var Filesystem
+     */
+    protected $fileSystem;
+
+    /**
+     * @var GitWrapper
+     */
+    protected $gitWrapper;
+
+
+    
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
 
@@ -70,17 +84,21 @@ class AbstractCommand extends Command
 
         $this->io = new SymfonyStyle($input, $output);
 
+        $this->gitWrapper = new GitWrapper();
+        $this->fileSystem = new Filesystem();
+        
         if (getenv('GITHUB_OAUTH_TOKEN')) {
             $this->githubAuthKey = getenv('GITHUB_OAUTH_TOKEN');
         }
 
         $this->packagistClient = new \Packagist\Api\Client();
 
+        
         $this->githubClient = new GithubClient(new HttpClient(array(
             // This version is needed for squash. https://developer.github.com/v3/pulls/#input-2
             'api_version' => 'polaris-preview',
         )));
-
+                        
         $this->githubPaginator = new \Github\ResultPager($this->githubClient);
         if ($this->githubAuthKey) {
             $this->githubClient->authenticate($this->githubAuthKey, null, \Github\Client::AUTH_HTTP_TOKEN);
@@ -93,7 +111,7 @@ class AbstractCommand extends Command
     }
 
     /**
-     * 
+     *
      */
     protected function configure()
     {
@@ -103,21 +121,20 @@ class AbstractCommand extends Command
     }
 
     /**
-     * 
+     *
      */
     final protected function forEachRepoDo($callback)
     {
         foreach ($this->configs as $owner => $ownerConfig) {
-
             if (!$ownerConfig['options']['active']) {
                 $this->io->note($owner . ' disabled in config.');
                 continue;
             }
             foreach ($ownerConfig['repositories'] as $repoName => $repoConfig) {
-
                 $repoConfig = array_merge(
-                    ['active' => false, 'is_project' => false]
-                    , $repoConfig);
+                    ['active' => false, 'is_project' => false],
+                    $repoConfig
+                );
 
                 if (!$repoConfig['active']) {
                     $this->io->note($owner . '/' . $repoName . ' disabled in config.');
@@ -130,7 +147,7 @@ class AbstractCommand extends Command
     }
 
     /**
-     * 
+     *
      * @param type $owner
      * @param type $repositoryName
      * @return \GitWrapper\GitWorkingCopy
@@ -146,7 +163,8 @@ class AbstractCommand extends Command
         // Clone repository
         $git = $this->gitWrapper->cloneRepository(
             'https://' . static::GITHUB_USER . ':' . $this->githubAuthKey
-            . '@github.com/' . $owner . '/' . $repositoryName, $clonePath
+            . '@github.com/' . $owner . '/' . $repositoryName,
+            $clonePath
         );
         //Git config
         $git
@@ -160,7 +178,7 @@ class AbstractCommand extends Command
     }
 
     /**
-     * 
+     *
      * @param type $repositoryName
      */
     final protected function pushChanges($git, $owner, $repositoryName)
@@ -169,7 +187,7 @@ class AbstractCommand extends Command
         $diff = $git->diff('--color', '--cached')->getOutput();
 
         if (!empty($diff)) {
-            $this->io->logStep('Diff is not empty.');
+            $this->logStep('Diff is not empty.');
 
             if ($this->apply) {
                 $this->logStep('Start creating a pull request from fork...');
@@ -177,9 +195,10 @@ class AbstractCommand extends Command
                 $this->logStep('Creating new commit...');
                 $git->commit('DevKit updates');
 
-                $this->logStep('Creating new fork...');
+                $this->logStep('Creating new fork... '.$owner.'/'.$repositoryName);
                 $this->githubClient->repos()->forks()->create($owner, $repositoryName);
-
+                // $this->githubClient->api('repo')->forks()->create($owner, $repositoryName);
+               
                 $this->logStep('Adding remote based on ' . static::GITHUB_USER . ' fork...');
                 $git->addRemote(static::GITHUB_USER, $this->getGithubDevkitRepoUrl($owner, $repositoryName));
                 usleep(500000);
@@ -192,7 +211,7 @@ class AbstractCommand extends Command
                     ->all($owner, $repositoryName, array(
                     'state' => 'open',
                     'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH
-                ));
+                    ));
 
                 if (0 === count($pulls)) {
                     $this->logStep('Pull request does not exist.');
@@ -203,7 +222,7 @@ class AbstractCommand extends Command
                             'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH,
                             'base' => 'master',
                             'body' => ''
-                    ));
+                        ));
                 }
 
                 // Wait 200ms to be sure GitHub API is up to date with new pushed branch/PR.
@@ -217,7 +236,7 @@ class AbstractCommand extends Command
     }
 
     /**
-     * 
+     *
      * @param type $git
      * @param type $repositoryName
      */
@@ -229,7 +248,7 @@ class AbstractCommand extends Command
     }
 
     /**
-     * 
+     *
      * @param type $owner
      * @param type $repositoryName
      * @return type
@@ -240,7 +259,7 @@ class AbstractCommand extends Command
     }
 
     /**
-     * 
+     *
      * @param type $owner
      * @param type $repositoryName
      * @return type
@@ -254,7 +273,7 @@ class AbstractCommand extends Command
     }
 
     /**
-     * 
+     *
      * @param type $repositoryName
      * @return type
      */
@@ -264,7 +283,7 @@ class AbstractCommand extends Command
     }
 
     /**
-     * 
+     *
      * @param type $repositoryName
      * @return type
      */
@@ -274,7 +293,7 @@ class AbstractCommand extends Command
     }
 
     /**
-     * 
+     *
      * @param array $userBunldeCfg
      * @return boolean
      */
@@ -309,7 +328,7 @@ class AbstractCommand extends Command
     
     public function logStep($message)
     {
-       $messages = is_array($message) ? array_values($message) : array($message);
+        $messages = is_array($message) ? array_values($message) : array($message);
 
         $this->io->writeln($messages);
         $this->io->newLine();

@@ -51,9 +51,6 @@ libre-informatique:
         EmailCRMBundle:
             active: true
             
-        UIBundle:
-            active: true
-            
         SecurityBundle:
             active: true
             

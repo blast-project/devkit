@@ -23,22 +23,12 @@ class SrcMigrationCommand extends AbstractCommand
 {
 
     /**
-     * @var GitWrapper
-     */
-    private $gitWrapper;
-
-    /**
-     * @var Filesystem
-     */
-    private $fileSystem;
-
-    /**
      * @var \Twig_Environment
      */
     private $twig;
 
     /**
-     * 
+     *
      */
     protected function configure()
     {
@@ -51,7 +41,7 @@ class SrcMigrationCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      */
@@ -59,23 +49,22 @@ class SrcMigrationCommand extends AbstractCommand
     {
         parent::initialize($input, $output);
 
-        $this->gitWrapper = new GitWrapper();
-        $this->fileSystem = new Filesystem();
         $this->twig = new \Twig_Environment(
-            new \Twig_Loader_Filesystem(__DIR__ . '/../../..'));
+            new \Twig_Loader_Filesystem(__DIR__ . '/../../..')
+        );
 
         $this->configs = $this->computeBundleConfigs($input->getArgument('bundles'));
     }
 
     /**
-     * 
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->forEachRepoDo(function($owner, $repoName, $repoConfig) {
+        $this->forEachRepoDo(function ($owner, $repoName, $repoConfig) {
             $this->migrateSources($owner, $repoName, $repoConfig);
         });
 
@@ -83,7 +72,7 @@ class SrcMigrationCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param type $owner
      * @param type $repoName
      */
@@ -107,7 +96,7 @@ class SrcMigrationCommand extends AbstractCommand
     }
 
     /**
-     * 
+     *
      * @param type $repositoryName
      */
     protected function applyChanges($owner, $repositoryName)
