@@ -106,6 +106,8 @@ class AbstractCommand extends Command
         if (!$this->apply) {
             $this->io->warning('This is a dry run execution. No change will be applied here.');
         }
+
+        $this->doNotDeleteFork = $input->getOption('do-not-delete-fork');
     }
 
     /**
@@ -116,6 +118,7 @@ class AbstractCommand extends Command
         parent::configure();
 
         $this->addOption('apply', null, InputOption::VALUE_NONE, 'Applies wanted requests');
+        $this->addOption('do-not-delete-fork', null, InputOption::VALUE_NONE, 'Do not delete the fork after process');
     }
 
     /**
@@ -241,8 +244,12 @@ class AbstractCommand extends Command
     final protected function deleteFork($git, $owner, $repositoryName)
     {
         $this->io->comment('Deleting remote ' . static::GITHUB_USER . '/' . $repositoryName . ' fork...');
-        $this->githubClient->repositories()->remove(static::GITHUB_USER, $repositoryName);
-        $this->io->success('Fork ' . static::GITHUB_USER . '/' . $repositoryName . ' deleted.');
+        if ($this->doNotDeleteFork) {
+            $this->io->warning('Fork will not be deleted after process due to option');
+        } else {
+            $this->githubClient->repositories()->remove(static::GITHUB_USER, $repositoryName);
+            $this->io->success('Fork ' . static::GITHUB_USER . '/' . $repositoryName . ' deleted.');
+        }
     }
 
     /**
