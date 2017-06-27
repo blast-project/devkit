@@ -1,6 +1,9 @@
 # Change Log
 
 ## [0.4.3](https://github.com/blast-project/devkit/tree/0.4.3) (2017-06-13)
+[Full Changelog](https://github.com/blast-project/devkit/compare/0.4.4...0.4.3)
+
+## [0.4.4](https://github.com/blast-project/devkit/tree/0.4.4) (2017-06-13)
 **Closed issues:**
 
 - File Right are not propagated [\#1](https://github.com/blast-project/devkit/issues/1)
