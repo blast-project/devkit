@@ -1,11 +1,15 @@
 <?php
+
 /*
- * This file is part of the Blast Project.
- * Copyright (C) 2017 Libre Informatique
- * This file is licenced under the GNU GPL v3.
- * For the full copyright and license information, please view the LICENSE
+ * This file is part of the Blast Project package.
+ *
+ * Copyright (C) 2015-2017 Libre Informatique
+ *
+ * This file is licenced under the GNU LGPL v3.
+ * For the full copyright and license information, please view the LICENSE.md
  * file that was distributed with this source code.
  */
+
 namespace Blast\DevKit\Console\Command;
 
 use Packagist\Api\Result\Package;
@@ -14,16 +18,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Description of AutoMergeCommand
+ * Description of AutoMergeCommand.
  *
  * @author Glenn Cavarlé <glenn.cavarle@libre-informatique.fr>
  */
 class PrAutoMergeCommand extends AbstractCommand
 {
-
-    /**
-     *
-     */
     protected function configure()
     {
         parent::configure();
@@ -35,8 +35,7 @@ class PrAutoMergeCommand extends AbstractCommand
     }
 
     /**
-     *
-     * @param InputInterface $input
+     * @param InputInterface  $input
      * @param OutputInterface $output
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
@@ -46,9 +45,9 @@ class PrAutoMergeCommand extends AbstractCommand
     }
 
     /**
-     *
-     * @param InputInterface $input
+     * @param InputInterface  $input
      * @param OutputInterface $output
+     *
      * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -61,10 +60,11 @@ class PrAutoMergeCommand extends AbstractCommand
     }
 
     /**
-     *
      * @param Package $package
-     * @param array $projectConfig
+     * @param array   $projectConfig
+     *
      * @return type
+     *
      * @throws RuntimeException
      */
     private function autoMergeBranches($owner, $repoName, array $repoConfig)
@@ -81,7 +81,7 @@ class PrAutoMergeCommand extends AbstractCommand
         $pulls = $this->githubClient->pullRequests()
             ->all($owner, $repoName, array(
             'state' => 'open',
-            'head' => 'master'
+            'head' => 'master',
         ));
 
         foreach ($pulls as $pull) {
@@ -91,6 +91,7 @@ class PrAutoMergeCommand extends AbstractCommand
                 $sha = $pull['head']['sha'];
                 $this->logStep(sprintf('- Found pull request id[%s] title[%s] sha[%s]', $id, $pull['title'], $sha));
                 $this->mergePullRequest($owner, $repoName, $id, $head, $base, $sha);
+
                 return;
             }
         }
@@ -98,7 +99,6 @@ class PrAutoMergeCommand extends AbstractCommand
     }
 
     /**
-     *
      * @throws \Blast\DevKit\Console\Command\RuntimeException
      */
     private function mergePullRequest($owner, $repoName, $id, $head, $base, $sha)
@@ -121,6 +121,7 @@ class PrAutoMergeCommand extends AbstractCommand
         } catch (\RuntimeException $e) {
             if (409 === $e->getCode()) {
                 $this->io->warning('Merging of ' . $head . ' into ' . $base . ' contains conflicts. Skipped.');
+
                 return;
             }
             throw $e;

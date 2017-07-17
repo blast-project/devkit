@@ -1,35 +1,32 @@
 <?php
+
 /*
- * This file is part of the Blast Project.
- * Copyright (C) 2017 Libre Informatique
- * This file is licenced under the GNU GPL v3.
- * For the full copyright and license information, please view the LICENSE
+ * This file is part of the Blast Project package.
+ *
+ * Copyright (C) 2015-2017 Libre Informatique
+ *
+ * This file is licenced under the GNU LGPL v3.
+ * For the full copyright and license information, please view the LICENSE.md
  * file that was distributed with this source code.
  */
+
 namespace Blast\DevKit\Console\Command;
 
 use Github\Exception\ExceptionInterface;
-use GitWrapper\GitWrapper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @author Glenn Cavarlé <glenn.cavarle@libre-informatique.fr>
  */
 class SrcMigrationCommand extends AbstractCommand
 {
-
     /**
      * @var \Twig_Environment
      */
     private $twig;
 
-    /**
-     *
-     */
     protected function configure()
     {
         parent::configure();
@@ -41,8 +38,7 @@ class SrcMigrationCommand extends AbstractCommand
     }
 
     /**
-     *
-     * @param InputInterface $input
+     * @param InputInterface  $input
      * @param OutputInterface $output
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
@@ -57,9 +53,9 @@ class SrcMigrationCommand extends AbstractCommand
     }
 
     /**
-     *
-     * @param InputInterface $input
+     * @param InputInterface  $input
      * @param OutputInterface $output
+     *
      * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -72,7 +68,6 @@ class SrcMigrationCommand extends AbstractCommand
     }
 
     /**
-     *
      * @param type $owner
      * @param type $repoName
      */
@@ -95,7 +90,6 @@ class SrcMigrationCommand extends AbstractCommand
     }
 
     /**
-     *
      * @param type $repositoryName
      */
     protected function applyChanges($owner, $repositoryName)
@@ -118,10 +112,9 @@ class SrcMigrationCommand extends AbstractCommand
             $this->fileSystem->touch($newTestFolder . '/.gitkeep');
         }
 
-
         //retrieve all files/folders to be moved
-        $nodes = glob($clonePath . "/[A-Z][a-z]*", GLOB_ONLYDIR);
-        $nodes = array_merge($nodes, glob($clonePath . "/[A-Z][a-z]*.php"));
+        $nodes = glob($clonePath . '/[A-Z][a-z]*', GLOB_ONLYDIR);
+        $nodes = array_merge($nodes, glob($clonePath . '/[A-Z][a-z]*.php'));
 
         //actually move sources in /src
         foreach ($nodes as $nodeName) {
@@ -139,7 +132,7 @@ class SrcMigrationCommand extends AbstractCommand
         //complete travis.yml
         $this->fileSystem->mirror('etc/bundle-skeleton', $clonePath, null, ['override' => true]);
         $result = $this->twig->render('etc/bundle-skeleton/.travis.yml', [
-            'github_url' => $this->getGithubRepoUrl($owner, $repositoryName)
+            'github_url' => $this->getGithubRepoUrl($owner, $repositoryName),
         ]);
         file_put_contents($clonePath . '/.travis.yml', $result);
 

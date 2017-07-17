@@ -1,11 +1,15 @@
 <?php
+
 /*
- * This file is part of the Blast Project.
- * Copyright (C) 2017 Libre Informatique
- * This file is licenced under the GNU GPL v3.
- * For the full copyright and license information, please view the LICENSE
+ * This file is part of the Blast Project package.
+ *
+ * Copyright (C) 2015-2017 Libre Informatique
+ *
+ * This file is licenced under the GNU LGPL v3.
+ * For the full copyright and license information, please view the LICENSE.md
  * file that was distributed with this source code.
  */
+
 namespace Blast\DevKit\Console\Command;
 
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -73,30 +77,26 @@ class AbstractCommand extends Command
      */
     protected $gitWrapper;
 
-
-    
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->configs = Yaml::parse(file_get_contents(__DIR__ . '/../../config/projects.yml'));
-
 
         $this->io = new SymfonyStyle($input, $output);
 
         $this->gitWrapper = new GitWrapper();
         $this->fileSystem = new Filesystem();
-        
+
         if (getenv('GITHUB_OAUTH_TOKEN')) {
             $this->githubAuthKey = getenv('GITHUB_OAUTH_TOKEN');
         }
 
         $this->packagistClient = new \Packagist\Api\Client();
 
-        
         $this->githubClient = new GithubClient(new HttpClient(array(
             // This version is needed for squash. https://developer.github.com/v3/pulls/#input-2
             'api_version' => 'polaris-preview',
         )));
-                        
+
         $this->githubPaginator = new \Github\ResultPager($this->githubClient);
         if ($this->githubAuthKey) {
             $this->githubClient->authenticate($this->githubAuthKey, null, \Github\Client::AUTH_HTTP_TOKEN);
@@ -110,9 +110,6 @@ class AbstractCommand extends Command
         $this->doNotDeleteFork = $input->getOption('do-not-delete-fork');
     }
 
-    /**
-     *
-     */
     protected function configure()
     {
         parent::configure();
@@ -121,9 +118,6 @@ class AbstractCommand extends Command
         $this->addOption('do-not-delete-fork', null, InputOption::VALUE_NONE, 'Do not delete the fork after process');
     }
 
-    /**
-     *
-     */
     final protected function forEachRepoDo($callback)
     {
         foreach ($this->configs as $owner => $ownerConfig) {
@@ -148,14 +142,13 @@ class AbstractCommand extends Command
     }
 
     /**
-     *
      * @param type $owner
      * @param type $repositoryName
+     *
      * @return \GitWrapper\GitWorkingCopy
      */
     final protected function cloneRepository($owner, $repositoryName)
     {
-
         // Ensure temp dir
         $clonePath = $this->getLocalClonePath($owner, $repositoryName);
         if ($this->fileSystem->exists($clonePath)) {
@@ -179,7 +172,6 @@ class AbstractCommand extends Command
     }
 
     /**
-     *
      * @param type $repositoryName
      */
     final protected function pushChanges($git, $owner, $repositoryName)
@@ -196,10 +188,10 @@ class AbstractCommand extends Command
                 $this->logStep('Creating new commit...');
                 $git->commit('DevKit updates');
 
-                $this->logStep('Creating new fork... '.$owner.'/'.$repositoryName);
+                $this->logStep('Creating new fork... ' . $owner . '/' . $repositoryName);
                 $this->githubClient->repos()->forks()->create($owner, $repositoryName);
                 // $this->githubClient->api('repo')->forks()->create($owner, $repositoryName);
-               
+
                 $this->logStep('Adding remote based on ' . static::GITHUB_USER . ' fork...');
                 $git->addRemote(static::GITHUB_USER, $this->getGithubDevkitRepoUrl($owner, $repositoryName));
                 usleep(500000);
@@ -211,7 +203,7 @@ class AbstractCommand extends Command
                 $pulls = $this->githubClient->pullRequests()
                     ->all($owner, $repositoryName, array(
                     'state' => 'open',
-                    'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH
+                    'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH,
                     ));
 
                 if (0 === count($pulls)) {
@@ -222,7 +214,7 @@ class AbstractCommand extends Command
                             'title' => 'DevKit updates for ' . $repositoryName,
                             'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH,
                             'base' => 'master',
-                            'body' => ''
+                            'body' => '',
                         ));
                 }
 
@@ -237,7 +229,6 @@ class AbstractCommand extends Command
     }
 
     /**
-     *
      * @param type $git
      * @param type $repositoryName
      */
@@ -253,9 +244,9 @@ class AbstractCommand extends Command
     }
 
     /**
-     *
      * @param type $owner
      * @param type $repositoryName
+     *
      * @return type
      */
     final protected function getGithubRepoUrl($owner, $repositoryName)
@@ -264,9 +255,9 @@ class AbstractCommand extends Command
     }
 
     /**
-     *
      * @param type $owner
      * @param type $repositoryName
+     *
      * @return type
      */
     final protected function getGithubDevkitRepoUrl($owner, $repositoryName)
@@ -278,8 +269,8 @@ class AbstractCommand extends Command
     }
 
     /**
-     *
      * @param type $repositoryName
+     *
      * @return type
      */
     final protected function getClonePath($owner, $repositoryName)
@@ -288,8 +279,8 @@ class AbstractCommand extends Command
     }
 
     /**
-     *
      * @param type $repositoryName
+     *
      * @return type
      */
     final protected function getLocalClonePath($owner, $repositoryName)
@@ -298,9 +289,9 @@ class AbstractCommand extends Command
     }
 
     /**
-     *
      * @param array $userBunldeCfg
-     * @return boolean
+     *
+     * @return bool
      */
     final public function computeBundleConfigs(array $userBunldeCfg)
     {
@@ -316,20 +307,19 @@ class AbstractCommand extends Command
             if (!isset($newConfigs[$orgName])) {
                 $newConfigs[$orgName] = [
                     'options' => ['active' => true],
-                    'repositories' => []
+                    'repositories' => [],
                 ];
             }
 
             $newConfigs[$orgName]['repositories'][$repoName] = [
                 'active' => true,
-                'is_project' => false
+                'is_project' => false,
             ];
         }
 
         return $newConfigs;
     }
-    
-    
+
     public function logStep($message)
     {
         $messages = is_array($message) ? array_values($message) : array($message);
