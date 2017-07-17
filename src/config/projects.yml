@@ -53,14 +53,8 @@ libre-informatique:
         EmailCRMBundle:
             active: true
             
-        SecurityBundle:
-            active: true
-            
         MediaBundle:
             active: true
             
         DecoratorBundle:
-            active: true
-            
-        UserBundle:
             active: true
