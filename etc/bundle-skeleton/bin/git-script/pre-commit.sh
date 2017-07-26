@@ -7,7 +7,7 @@ echo "php-cs-fixer pre commit hook start"
 PHP_CS_FIXER=$(which php-cs-fixer)
 HAS_PHP_CS_FIXER=false
 
-if [ -x $PHP_CS_FIXER ]; then
+if [ -x "$PHP_CS_FIXER" ]; then
     HAS_PHP_CS_FIXER=true
 fi
 
