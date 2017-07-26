@@ -1,9 +1,17 @@
 # Change Log
 
-## [0.4.3](https://github.com/blast-project/devkit/tree/0.4.3) (2017-06-13)
-[Full Changelog](https://github.com/blast-project/devkit/compare/0.4.4...0.4.3)
+## [0.4.5](https://github.com/blast-project/devkit/tree/0.4.5) (2017-07-26)
+[Full Changelog](https://github.com/blast-project/devkit/compare/0.4.4...0.4.5)
 
-## [0.4.4](https://github.com/blast-project/devkit/tree/0.4.4) (2017-06-13)
+**Closed issues:**
+
+- add concat\_with\_spaces rule in all .php\_cs [\#5](https://github.com/blast-project/devkit/issues/5)
+- add .php\_cs.cache in gitignore [\#4](https://github.com/blast-project/devkit/issues/4)
+
+## [0.4.4](https://github.com/blast-project/devkit/tree/0.4.4) (2017-06-27)
+[Full Changelog](https://github.com/blast-project/devkit/compare/0.4.3...0.4.4)
+
+## [0.4.3](https://github.com/blast-project/devkit/tree/0.4.3) (2017-06-13)
 **Closed issues:**
 
 - File Right are not propagated [\#1](https://github.com/blast-project/devkit/issues/1)
