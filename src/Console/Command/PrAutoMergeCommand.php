@@ -81,7 +81,7 @@ class PrAutoMergeCommand extends AbstractCommand
         $pulls = $this->githubClient->pullRequests()
             ->all($owner, $repoName, array(
             'state' => 'open',
-            'head' => 'master',
+            'head'  => 'master',
         ));
 
         foreach ($pulls as $pull) {

@@ -203,7 +203,7 @@ class AbstractCommand extends Command
                 $pulls = $this->githubClient->pullRequests()
                     ->all($owner, $repositoryName, array(
                     'state' => 'open',
-                    'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH,
+                    'head'  => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH,
                     ));
 
                 if (0 === count($pulls)) {
@@ -212,9 +212,9 @@ class AbstractCommand extends Command
                     $this->githubClient->pullRequests()
                         ->create($owner, $repositoryName, array(
                             'title' => 'DevKit updates for ' . $repositoryName,
-                            'head' => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH,
-                            'base' => 'master',
-                            'body' => '',
+                            'head'  => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH,
+                            'base'  => 'master',
+                            'body'  => '',
                         ));
                 }
 
@@ -306,13 +306,13 @@ class AbstractCommand extends Command
             //create the default project structure
             if (!isset($newConfigs[$orgName])) {
                 $newConfigs[$orgName] = [
-                    'options' => ['active' => true],
+                    'options'      => ['active' => true],
                     'repositories' => [],
                 ];
             }
 
             $newConfigs[$orgName]['repositories'][$repoName] = [
-                'active' => true,
+                'active'     => true,
                 'is_project' => false,
             ];
         }
