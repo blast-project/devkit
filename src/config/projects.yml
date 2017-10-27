@@ -44,6 +44,9 @@ libre-informatique:
         SeedBatchBundle:
             active: true
             
+        SyliusPayboxBundle:
+            active: true
+            
         CRMBundle:
             active: true
             
