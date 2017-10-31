@@ -71,7 +71,7 @@ class PrAutoMergeCommand extends AbstractCommand
     {
         $this->io->title($owner . '/' . $repoName);
 
-        $base = 'master';
+        $base =  static::BASE_BRANCH;
         $head = 'BlastCI:' . static::DEVKIT_BRANCH;
         $sha = null;
         $id = null;
@@ -81,8 +81,8 @@ class PrAutoMergeCommand extends AbstractCommand
         $pulls = $this->githubClient->pullRequests()
             ->all($owner, $repoName, array(
             'state' => 'open',
-            'head'  => 'master',
-        ));
+            'head'  =>  static::BASE_BRANCH,
+            ));
 
         foreach ($pulls as $pull) {
             if ($pull['head']['label'] === $head &&
@@ -111,7 +111,11 @@ class PrAutoMergeCommand extends AbstractCommand
             // Merge message should be removed when following PR will be merged and tagged.
             // https://github.com/KnpLabs/php-github-api/pull/379
             $response = $this->githubClient->pullRequests()->merge(
-                $owner, $repoName, $id, sprintf('Merge %s into %s', $head, $base), $sha
+                $owner,
+                $repoName,
+                $id,
+                sprintf('Merge %s into %s', $head, $base),
+                $sha
             );
             if (is_array($response) && array_key_exists('sha', $response)) {
                 $this->io->success('Merged ' . $head . ' into ' . $base);

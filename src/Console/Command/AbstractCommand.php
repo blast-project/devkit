@@ -35,6 +35,7 @@ class AbstractCommand extends Command
     const BLAST_GROUP = 'blast-project';
     const LABEL_NOTHING_CHANGED = 'Nothing to be changed.';
     const DEVKIT_BRANCH = 'update-branch';
+    const BASE_BRANCH = 'wip-lisem';
 
     /**
      * @var SymfonyStyle
@@ -213,7 +214,7 @@ class AbstractCommand extends Command
                         ->create($owner, $repositoryName, array(
                             'title' => 'DevKit updates for ' . $repositoryName,
                             'head'  => static::GITHUB_USER . ':' . static::DEVKIT_BRANCH,
-                            'base'  => 'master',
+                            'base'  => static::BASE_BRANCH,
                             'body'  => '',
                         ));
                 }
