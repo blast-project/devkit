@@ -24,6 +24,9 @@ blast-project:
         TestsBundle:
             active: true
 
+        ResourceBundle:
+            active: true
+
         bundle-skeleton:
             active: true
 
@@ -60,4 +63,15 @@ libre-informatique:
             active: true
             
         DecoratorBundle:
+            active: true
+
+sil-project:
+    options:
+       active: true
+
+    repositories:
+        StockBundle:
+            active: true
+            
+        ManufacturingBundle:
             active: true
