@@ -31,5 +31,6 @@
         "psr-4": {
             "Blast\\DevKit\\": "src"
         }
-    }
+    },
+    "version": "0.6.4"
 }
